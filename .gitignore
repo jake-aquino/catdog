@@ -7,9 +7,10 @@ __pycache__/
 .ipynb_checkpoints/
 
 # Data & models
-data/raw/
-data/processed/
-data/tmp/
+data/*
+!data/.gitkeep
+!data/README.md
+
 models/
 reports/
 runs/
