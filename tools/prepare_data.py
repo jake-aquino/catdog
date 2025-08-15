@@ -1,6 +1,7 @@
 import argparse
 import os
 
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description='Prepare the cats vs dogs dataset for training/testing'
@@ -45,7 +46,7 @@ def parse_args():
         '--seed',
         type=int,
         default=42,
-        h
+        help= 'Seed for reproducibility'
     )
 
     # Optional: sample creation
@@ -66,9 +67,35 @@ def parse_args():
 
     return args
 
+def create_folders(data_root, splits, class_names):
+    for split in splits:
+        split_path = os.path.join(data_root, split)
+        os.makedirs(split_path, exist_ok=True)
+
+        for class_name in class_names:
+            class_path = os.path.join(split_path, class_name)
+            os.makedirs(class_path, exist_ok=True)
+
+    return
+
+
+
 
 def main():
-    return 0
+    args = parse_args()
+    print(args)
+
+    seed = args.seed
+
+    splits = ['train', 'val']
+
+    class_names = ['cat', 'dog']
+
+    output_path = os.path.expanduser(args.output)
+
+    create_folders(output_path, splits, class_names)
+
+
 
 
 if __name__ == '__main__':
