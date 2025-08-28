@@ -21,7 +21,7 @@ def parse_args():
         help='Path to save processed dataset (e.g., data/processed)'
     )
 
-    # Optional: preprocessing parameters
+    #preprocessing parameters
     parser.add_argument(
         '--img-size',
         type=int,
@@ -41,7 +41,7 @@ def parse_args():
         help='Fraction of images to use for test (default: 0.15)'
     )
 
-    # Optional: reproducibility
+    #reproducibility
     parser.add_argument(
         '--seed',
         type=int,
@@ -49,23 +49,49 @@ def parse_args():
         help= 'Seed for reproducibility'
     )
 
-    # Optional: sample creation
+    #sample creation
     parser.add_argument(
         '--make-sample',
         action='store_true',
         help='If set, also create data/sample/ with a few images per class'
     )
 
-    # Local rank (kept from original for multi-GPU compat, default unused here)
+    #Local rank (kept from original for multi-GPU compat, default unused here)
     parser.add_argument('--local_rank', type=int, default=0)
 
     args = parser.parse_args()
 
-    # Ensure LOCAL_RANK is set (even though we likely don’t use it here)
     if 'LOCAL_RANK' not in os.environ:
         os.environ['LOCAL_RANK'] = str(args.local_rank)
 
     return args
+
+def validate_args(args):
+    input_root = Path(os.path.expanduser(args.input)).resolve()
+    output_root = Path(os.path.expanduser(args.output)).resolve()
+
+    if not input_root.exists() or not input_root.is_dir():
+        sys.exit(f"[ERROR] Input directory does not exist or is not a directory: {input_root}")
+
+    if args.img_size <= 0:
+        sys.exit("[ERROR] --img-size must be a positive integer.")
+
+    if not (0.0 <= args.val < 1.0) or not (0.0 <= args.test < 1.0):
+        sys.exit("[ERROR] --val and --test must be in [0.0, 1.0).")
+
+    if args.val + args.test >= 0.999999:
+        sys.exit("[ERROR] --val + --test must be < 1.0 (leave room for train).")
+
+    # Output directory handling
+    if output_root.exists():
+        if args.force:
+            print(f"[INFO] --force given: removing existing output directory: {output_root}")
+            shutil.rmtree(output_root)
+        else:
+            print(f"[WARN] Output directory exists and will be reused: {output_root}")
+    output_root.mkdir(parents=True, exist_ok=True)
+
+    return input_root, output_root
 
 def create_folders(data_root, splits, class_names):
     for split in splits:
@@ -81,8 +107,10 @@ def create_folders(data_root, splits, class_names):
 
 
 
+
 def main():
     args = parse_args()
+    
     print(args)
 
     seed = args.seed
