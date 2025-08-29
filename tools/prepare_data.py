@@ -1,5 +1,17 @@
 import argparse
 import os
+import sys
+import json
+import shutil
+import random
+from datetime import datetime
+from typing import Dict, List, Tuple
+from pathlib import Path
+
+from PIL import Image
+
+CLASSES = ["cat", "dog"]
+IMG_FORMAT = ".jpg"
 
 
 def parse_args():
@@ -56,6 +68,12 @@ def parse_args():
         help='If set, also create data/sample/ with a few images per class'
     )
 
+    parser.add_argument(
+    '--force',
+    action='store_true',
+    help='If set, wipe the output directory before writing'
+    )
+
     #Local rank (kept from original for multi-GPU compat, default unused here)
     parser.add_argument('--local_rank', type=int, default=0)
 
@@ -104,13 +122,57 @@ def create_folders(data_root, splits, class_names):
 
     return
 
+def set_seed(seed):
+    random.seed(seed)
+
+def collect_images(input_root, classes):
+    class_to_paths = {}
+
+    for c in classes:
+        c_dir = input_root / c
+
+        imgs = [img for img in c_dir.rglob("*") if img.suffix.lower() == IMG_FORMAT]
+        class_to_paths[c] = sorted(imgs)
+        print(f'[INFO] Class {c}: found {len(imgs)}')
+        
+        if len(imgs) == 0:
+            print(f'[ERROR No images found for {c} in directory {c_dir}')
+
+    return class_to_paths
+
+def get_splits(class_to_paths, val_frac, test_frac, seed):
+    rng = random.Random(seed)
+
+    splits = {'train': {}, 'val': {}, 'test': {}}
+
+    for c, paths in class_to_paths.items():
+        buf = list(paths)
+        rng.shuffle(buf)
+        n = len(buf)
+        n_val = int(n * val_frac)
+        n_test = int(n * test_frac)
+        n_train = n - n_val - n_test
+
+        if n_train <= 0:
+            sys.exit(f"[ERROR] Not enough images in class: {c} after split")
+
+        splits['val'][c] = buf[:n_val]
+        splits['test'][c] = buf[n_val:n_val+n_test]
+        splits['train'][c] = buf[n_val+n_test:]
+        
+        print(f"[INFO] Split {c}: train={len(splits['train'][c])}, "
+              f"val={len(splits['val'][c])}, test={len(splits['test'][c])}")
+
+    return splits
 
 
 
 
 def main():
     args = parse_args()
-    
+
+    input_root, output_root = validate_args(args)
+
     print(args)
 
     seed = args.seed
@@ -122,6 +184,12 @@ def main():
     output_path = os.path.expanduser(args.output)
 
     create_folders(output_path, splits, class_names)
+    
+    class_paths = collect_images(input_root, CLASSES)
+
+    splits = get_splits(class_paths, args.val, args.test, args.seed)
+
+
 
 
 
