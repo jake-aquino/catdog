@@ -4,7 +4,10 @@ import sys
 import json
 import shutil
 import random
+import numpy as np
+import tensorflow as tf
 from pathlib import Path
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -101,3 +104,55 @@ def parse_args():
     return args
 
 
+def validate_args():
+    data_root = Path(os.path.expanduser(args.data)).resolve()
+    output_root = Path(os.path.expanduser(args.output)).resolve()
+
+    # Check data root exists
+    if not data_root.exists():
+        sys.exit(f"[ERROR] Data path does not exist: {data_root}")
+    if not (data_root / "train").exists() or not (data_root / "val").exists():
+        sys.exit(f"[ERROR] Data path must contain 'train/' and 'val/' subdirectories.")
+
+    # Sanity checks
+    if args.img_size <= 0:
+        sys.exit("[ERROR] --img-size must be > 0.")
+    if args.batch_size <= 0:
+        sys.exit("[ERROR] --batch-size must be > 0.")
+    if args.epochs <= 0:
+        sys.exit("[ERROR] --epochs must be > 0.")
+    if args.freeze_epochs < 0 or args.freeze_epochs > args.epochs:
+        sys.exit("[ERROR] --freeze-epochs must be between 0 and total epochs.")
+    if args.finetune_top < 0:
+        sys.exit("[ERROR] --finetune-top must be >= 0.")
+
+    # Create output dir if missing
+    output_root.mkdir(parents=True, exist_ok=True)
+
+    return data_root, output_root
+
+def set_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    tf.random.set_seed(seed)
+
+    # Optional extras for more determinism
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    os.environ["TF_DETERMINISTIC_OPS"] = "1"
+
+
+
+
+def main():
+    return
+
+    #Validate args
+
+    #Set seed
+
+    #Load datasets
+    #   train and val
+    #   next(iter(train_ds)) returns batch_images, batch_labels
+
+if __name__ == "__main__":
+    main()
