@@ -1,4 +1,7 @@
 # Core
+tensorflow-macos==2.15.*
+tensorflow-metal==1.1.*
+
 fastapi>=0.111
 uvicorn[standard]>=0.30
 pillow>=10.0
