@@ -1,19 +1,23 @@
-# Core
-tensorflow-macos==2.15.*
-tensorflow-metal==1.1.*
+# --- Core ML ---
+# On macOS: use Apple Silicon build of TensorFlow
+tensorflow-macos==2.16.*; sys_platform == "darwin"
+tensorflow-metal==1.2.*; sys_platform == "darwin"
 
-fastapi>=0.111
-uvicorn[standard]>=0.30
+# On Linux (e.g., Docker): use standard TensorFlow
+tensorflow==2.16.*; sys_platform != "darwin"
+
 pillow>=10.0
 numpy>=1.26
 
-# Training / evaluation
+# --- Training / evaluation ---
 scikit-learn>=1.4
+tqdm>=4.66   # progress bars
 
-# CLI & misc
-python-multipart>=0.0.9    # file uploads in FastAPI forms
-jinja2>=3.1                 # if you render an HTML template in app/
-tqdm>=4.66                  # optional progress bars
+# --- Serving / API ---
+fastapi>=0.111
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9    # for file uploads
+jinja2>=3.1                # if you render HTML templates
 
-# Dev/test (optional but handy)
+# --- Dev / testing ---
 pytest>=8.2

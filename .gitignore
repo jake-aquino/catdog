@@ -6,12 +6,21 @@ __pycache__/
 .env
 .ipynb_checkpoints/
 
-# Data & models
-data/*
-!data/.gitkeep
+# Data
+data/raw/
+data/processed/
+data/tmp/
+# keep sample + docs
+!data/sample/**
 !data/README.md
+!data/.gitkeep
 
-models/
+# Models (ignore everything inside, keep metadata if needed)
+models/*
+!models/.gitkeep
+!models/README.md
+
+# Training artifacts
 reports/
 runs/
 
@@ -19,4 +28,3 @@ runs/
 .DS_Store
 .vscode/
 .idea/
-
