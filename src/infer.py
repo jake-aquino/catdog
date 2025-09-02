@@ -8,6 +8,9 @@ import numpy as np
 from PIL import Image
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input as mv2_pre
+from tensorflow.keras.applications.efficientnet import preprocess_input as eff_pre
+from tensorflow.keras.models import load_model
 
 
 def parse_args():
@@ -42,16 +45,20 @@ def parse_args():
     )
     return p.parse_args()
 
-
 def load_artifacts(model_path: Path, labels_path: Path):
     if not model_path.exists():
         sys.exit(f"[ERROR] Model file not found: {model_path}")
     if not labels_path.exists():
         sys.exit(f"[ERROR] Label map not found: {labels_path}")
 
-    model = load_model(model_path)
+    # Try MobilenetV2 first, then EfficientNet
+    try:
+        model = load_model(model_path, custom_objects={"preprocess_input": mv2_pre})
+    except Exception:
+        model = load_model(model_path, custom_objects={"preprocess_input": eff_pre})
+
     with labels_path.open("r") as f:
-        label_map = json.load(f)  # e.g., {"cat":0,"dog":1}
+        label_map = json.load(f)
     id_to_name = {v: k for k, v in label_map.items()}
     return model, id_to_name
 
@@ -76,7 +83,7 @@ def load_and_prepare(img_path: Path, target_size: int):
 
     arr = img_to_array(img)          # float32, shape (H, W, 3)
     arr = np.expand_dims(arr, axis=0)  # shape (1, H, W, 3)
-    
+
     return arr
 
 
